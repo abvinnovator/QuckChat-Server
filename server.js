@@ -266,6 +266,12 @@ io.on('connection', (socket) => {
   });
 });
 
+// Deployment configuration - MUST come before other routes
+const __dirname1 = path.resolve();
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname1, "/dist")));
+}
+
 // REST API endpoints
 app.get('/api/stats', (req, res) => {
   res.json({
@@ -284,25 +290,18 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Basic route
-app.get('/', (req, res) => {
-  res.json({
-    message: 'RandomChat Server is running!',
-    onlineUsers: connectedUsers.size,
-    activeChats: partnerships.size / 2
-  });
-});
-
-// Deployment configuration
-const __dirname1 = path.resolve();
+// Development route and catch-all
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname1, "/dist")));
   app.get("*", (req, res) =>
     res.sendFile(path.resolve(__dirname1, "dist", "index.html"))
   );
 } else {
-  app.get("/api", (req, res) => {
-    res.send("RandomChat API is running in development mode..");
+  app.get("/", (req, res) => {
+    res.json({
+      message: 'RandomChat Server is running in development!',
+      onlineUsers: connectedUsers.size,
+      activeChats: partnerships.size / 2
+    });
   });
 }
 
