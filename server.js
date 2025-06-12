@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
@@ -9,7 +10,9 @@ const server = http.createServer(app);
 // Configure CORS for Socket.io
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:5173", // Your React dev server
+    origin: process.env.NODE_ENV === "production" 
+      ? false  // Allow same origin in production
+      : "http://localhost:5173", // Your React dev server
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -17,7 +20,9 @@ const io = socketIo(server, {
 
 // Middleware
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: process.env.NODE_ENV === "production" 
+    ? false  // Allow same origin in production
+    : "http://localhost:5173",
   credentials: true
 }));
 app.use(express.json());
@@ -287,6 +292,19 @@ app.get('/', (req, res) => {
     activeChats: partnerships.size / 2
   });
 });
+
+// Deployment configuration
+const __dirname1 = path.resolve();
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname1, "/dist")));
+  app.get("*", (req, res) =>
+    res.sendFile(path.resolve(__dirname1, "dist", "index.html"))
+  );
+} else {
+  app.get("/api", (req, res) => {
+    res.send("RandomChat API is running in development mode..");
+  });
+}
 
 // Cleanup function to remove stale connections
 setInterval(() => {
